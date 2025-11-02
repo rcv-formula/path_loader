@@ -53,6 +53,8 @@ CordinateConverter::CordinateConverter(rclcpp::Node::SharedPtr node,
 
       publisher_ =
           node_->create_publisher<nav_msgs::msg::Path>("global_path", qos);
+      vis_publisher_ =
+          node_->create_publisher<nav_msgs::msg::Path>("global_path_vis", qos);
       timer_ = node_->create_wall_timer(std::chrono::seconds(1), [this]() {
         path_publisher();
         timer_->cancel();
@@ -97,7 +99,11 @@ double CordinateConverter::calcPathToPathHeading(int idx) {
 }
 
 void CordinateConverter::path_publisher() {
+  auto now = node_->get_clock()->now();
+  global_path_msg_->header.stamp = now;
+  global_path_vis_msg_->header.stamp = now;
   publisher_->publish(*global_path_msg_);
+  vis_publisher_->publish(*global_path_vis_msg_);
   RCLCPP_INFO(node_->get_logger(), "Published Path with %zu points",
               global_path_msg_->poses.size());
 }
@@ -106,6 +112,9 @@ void CordinateConverter::path_msg_generator() {
   global_path_msg_ = std::make_shared<nav_msgs::msg::Path>();
   global_path_msg_->header.stamp = node_->get_clock()->now();
   global_path_msg_->header.frame_id = "map";
+  global_path_vis_msg_ = std::make_shared<nav_msgs::msg::Path>();
+  global_path_vis_msg_->header.stamp = global_path_msg_->header.stamp;
+  global_path_vis_msg_->header.frame_id = "map";
 
   for (int i = 0; i < global_path_.size(); i++) {
     geometry_msgs::msg::PoseStamped pose;
@@ -116,8 +125,10 @@ void CordinateConverter::path_msg_generator() {
     pose.pose.position.z = global_path_[i][2];
     pose.pose.orientation.w = 1.0; // 단순한 예제이므로 회전 없음
     global_path_msg_->poses.push_back(pose);
+
+    pose.pose.position.z = 0.0;
+    global_path_vis_msg_->poses.push_back(pose);
   }
-  global_path_msg_;
 }
 
 std::vector<std::vector<double>> CordinateConverter::getGlobalPath() {

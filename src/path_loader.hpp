@@ -44,6 +44,8 @@ private:
 
   rclcpp::Node::SharedPtr node_;
   nav_msgs::msg::Path::SharedPtr global_path_msg_;
+  nav_msgs::msg::Path::SharedPtr global_path_vis_msg_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr publisher_;
+  rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr vis_publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
 };
